@@ -1,0 +1,32 @@
+# Client Billing Rates Configuration
+# Used for revenue calculations in the orchestrator dashboard
+
+clients:
+  moloco:
+    display_name: "Moloco"
+    harvest_project_id: 41385714
+    rates:
+      default: 192  # Everyone bills at $192/hr
+
+  fivesky:
+    display_name: "Fivesky"
+    harvest_project_id: 14480775
+    rates:
+      default: 165     # Standard developer rate
+      samir: 275       # Samir's rate
+
+  latacora:
+    display_name: "Latacora"
+    harvest_project_id: null  # Add when known
+    rates:
+      default: 200     # Blended rate
+
+# Net revenue calculation
+expenses:
+  monthly_overhead: 1000  # Fixed monthly expenses
+  tax_rate: 0.35          # 35% estimated tax rate
+
+# Revenue targets
+targets:
+  monthly_hours: 120
+  monthly_revenue_gross: 20000  # Target gross revenue

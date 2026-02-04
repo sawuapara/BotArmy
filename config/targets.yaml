@@ -1,0 +1,20 @@
+# Revenue and Time Targets
+
+# Monthly revenue target (hours)
+# If below this, prioritize MecanoConsulting billable work
+monthly:
+  target_hours: 120  # Adjust based on your billing goals
+
+  # Which Harvest projects count toward consulting revenue
+  billable_projects:
+    - Moloco
+    - Fivesky
+    - Latacora
+
+# How to handle edge cases
+thresholds:
+  # If within X hours of target, allow flexibility
+  buffer_hours: 5
+
+  # Minimum hours per week on product work (even if behind on consulting)
+  min_product_hours_weekly: 4

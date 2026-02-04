@@ -1,0 +1,50 @@
+# Client and Project Priority Configuration
+# Higher weight = higher priority
+
+# MecanoConsulting Clients (JIRA)
+clients:
+  Moloco:
+    weight: 100
+    jira_project_key: MOL
+  Fivesky:
+    weight: 80
+    jira_project_key: FSN
+  Latacora:
+    weight: 60
+    jira_project_key: LAT
+
+# MecanoLabs / Other Projects (when revenue target is met)
+projects:
+  AdminPro:
+    weight: 100
+    source: salesforce  # Uses AdminPro tickets in Salesforce
+    project_name: AdminPro
+  OpenRadiomics:
+    weight: 80
+    source: local  # Or github issues, TBD
+    alias: RadNexus
+  LLMDesign:
+    weight: 60
+    source: local  # Personal project tracking
+
+# Ticket Scoring Weights
+scoring:
+  # Base weight from client priority
+  client_priority_multiplier: 1.0
+
+  # Potential revenue (hours estimate * hourly rate factor)
+  revenue_weight: 10
+
+  # Completion proximity (0-100% complete)
+  # Higher completion = prioritize finishing
+  completion_weight: 50
+
+  # Age factor (days since created)
+  # Older tickets slowly bubble up
+  age_weight: 0.5
+
+  # Urgency boost (if ticket has urgent/critical label)
+  urgency_boost: 100
+
+  # Blocker boost (if ticket is blocking others)
+  blocker_boost: 75

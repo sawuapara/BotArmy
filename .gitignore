@@ -1,0 +1,25 @@
+# Environment
+.env
+backend/.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# IDE
+.idea/
+.vscode/
+
+# LangGraph checkpoints
+checkpoints/
+
+# OS
+.DS_Store
+
+# Python virtualenvs
+backend/.venv/
