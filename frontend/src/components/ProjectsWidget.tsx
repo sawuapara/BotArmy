@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FolderOpen, Plus, X, ChevronDown } from 'lucide-react';
 import { useNamespace } from '../context/NamespaceContext';
-
-const API_BASE = 'http://localhost:8000';
+import { API_BASE } from '../lib/config';
 
 interface LabelInfo {
   id: string;

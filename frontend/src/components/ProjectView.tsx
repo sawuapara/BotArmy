@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Trash2, FolderOpen, CheckSquare, LayoutDashboard, Database, Tag, X, Plus, ChevronDown } from 'lucide-react';
-
-const API_BASE = 'http://localhost:8000';
+import { API_BASE } from '../lib/config';
 
 interface Namespace {
   id: string;

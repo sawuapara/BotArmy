@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Database, Table, ChevronLeft, ChevronRight, ChevronDown, RefreshCw, ArrowUpDown, LayoutDashboard, Folder, FolderOpen, Lock } from 'lucide-react';
-
-const API_BASE = 'http://localhost:8000';
+import { API_BASE } from '../lib/config';
 
 interface TableInfo {
   name: string;

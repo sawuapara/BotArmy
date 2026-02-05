@@ -16,6 +16,11 @@ from pydantic import BaseModel
 from .orchestrator.graph import create_orchestrator
 from .orchestrator.state import OrchestratorState, TicketInfo
 from .api.revenue import router as revenue_router
+from .api.vault import router as vault_router
+from .api.organization import router as organization_router
+from .api.projects import router as projects_router
+from .api.tasks import router as tasks_router
+from .api.database import router as database_router
 
 
 # Store active sessions and their states
@@ -38,10 +43,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS for React frontend
+# CORS for React frontend (allow all 3000-range ports for local dev)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):30[0-9]{2}",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,6 +54,11 @@ app.add_middleware(
 
 # Include routers
 app.include_router(revenue_router)
+app.include_router(vault_router)
+app.include_router(organization_router)
+app.include_router(projects_router)
+app.include_router(tasks_router)
+app.include_router(database_router)
 
 
 # ---------- Pydantic Models ----------

@@ -10,8 +10,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import type { RevenueMetrics, ClientRevenue } from '../types';
-
-const API_BASE = 'http://localhost:8000';
+import { API_BASE } from '../lib/config';
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-US', {

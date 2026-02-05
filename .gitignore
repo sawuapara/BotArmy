@@ -23,3 +23,6 @@ checkpoints/
 
 # Python virtualenvs
 backend/.venv/
+
+# Worktree-specific configuration (each worktree has its own)
+.worktree-config

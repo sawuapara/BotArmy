@@ -8,9 +8,8 @@ import { ProjectsWidget } from './components/ProjectsWidget';
 import { TasksWidget } from './components/TasksWidget';
 import { AppHeader } from './components/AppHeader';
 import { useNamespace } from './context/NamespaceContext';
+import { API_BASE } from './lib/config';
 import type { Session } from './types';
-
-const API_BASE = 'http://localhost:8000';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);

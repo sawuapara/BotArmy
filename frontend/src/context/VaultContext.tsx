@@ -7,8 +7,7 @@ import React, {
   type ReactNode,
 } from 'react';
 import { deriveKey, encryptObject, decryptObject } from '../lib/crypto';
-
-const API_BASE = 'http://localhost:8000';
+import { API_BASE } from '../lib/config';
 
 // Session storage key for unlock status (cleared on tab close)
 const VAULT_UNLOCKED_KEY = 'vault_unlocked';

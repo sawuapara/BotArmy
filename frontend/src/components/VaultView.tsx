@@ -24,8 +24,7 @@ import { useVault } from '../context/VaultContext';
 import { useNamespace } from '../context/NamespaceContext';
 import { VaultUnlock } from './VaultUnlock';
 import { AppHeader } from './AppHeader';
-
-const API_BASE = 'http://localhost:8000';
+import { API_BASE } from '../lib/config';
 
 interface VaultFolder {
   id: string;
