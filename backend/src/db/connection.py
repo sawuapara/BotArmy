@@ -159,6 +159,7 @@ async def run_migrations(pool: asyncpg.Pool):
             ("009_vault_encryption", MIGRATION_009_VAULT_ENCRYPTION),
             ("010_create_identity_schema", MIGRATION_010_CREATE_IDENTITY_SCHEMA),
             ("011_create_orchestration_schema", MIGRATION_011_CREATE_ORCHESTRATION_SCHEMA),
+            ("012_cleanup_public_schema", MIGRATION_012_CLEANUP_PUBLIC_SCHEMA),
         ]
 
         # Count pending migrations
@@ -866,4 +867,15 @@ CREATE TRIGGER update_orchestration_edges_updated_at
     BEFORE UPDATE ON orchestration.edges
     FOR EACH ROW
     EXECUTE FUNCTION orchestration.update_updated_at_column();
+"""
+
+MIGRATION_012_CLEANUP_PUBLIC_SCHEMA = """
+-- Cleanup: Remove deprecated tables from public schema
+-- Data was migrated to projects.projects in migration 006
+
+-- Drop work_sessions table (unused)
+DROP TABLE IF EXISTS public.work_sessions;
+
+-- Drop old projects table (duplicated in projects schema)
+DROP TABLE IF EXISTS public.projects;
 """
