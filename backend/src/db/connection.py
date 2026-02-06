@@ -160,6 +160,7 @@ async def run_migrations(pool: asyncpg.Pool):
             ("010_create_identity_schema", MIGRATION_010_CREATE_IDENTITY_SCHEMA),
             ("011_create_orchestration_schema", MIGRATION_011_CREATE_ORCHESTRATION_SCHEMA),
             ("012_cleanup_public_schema", MIGRATION_012_CLEANUP_PUBLIC_SCHEMA),
+            ("013_add_project_sort_order", MIGRATION_013_ADD_PROJECT_SORT_ORDER),
         ]
 
         # Count pending migrations
@@ -878,4 +879,13 @@ DROP TABLE IF EXISTS public.work_sessions;
 
 -- Drop old projects table (duplicated in projects schema)
 DROP TABLE IF EXISTS public.projects;
+"""
+
+MIGRATION_013_ADD_PROJECT_SORT_ORDER = """
+-- Add sort_order field to projects for custom ordering/priority
+ALTER TABLE projects.projects
+    ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
+
+-- Index for efficient ordering
+CREATE INDEX IF NOT EXISTS idx_projects_projects_sort_order ON projects.projects(sort_order ASC);
 """

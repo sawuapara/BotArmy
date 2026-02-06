@@ -6,6 +6,8 @@ import { DatabaseViewer } from './components/DatabaseViewer'
 import { ProjectView } from './components/ProjectView'
 import { TaskView } from './components/TaskView'
 import { VaultView } from './components/VaultView'
+import { LoginPage } from './components/LoginPage'
+import { RequireAuth } from './components/RequireAuth'
 import { VaultProvider } from './context/VaultContext'
 import { NamespaceProvider } from './context/NamespaceContext'
 import './index.css'
@@ -16,11 +18,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <VaultProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<App />} />
-            <Route path="/database" element={<DatabaseViewer />} />
-            <Route path="/projects/:projectId" element={<ProjectView />} />
-            <Route path="/tasks/:taskId" element={<TaskView />} />
-            <Route path="/vault" element={<VaultView />} />
+            {/* Public route */}
+            <Route path="/login" element={<LoginPage />} />
+
+            {/* Protected routes */}
+            <Route path="/" element={<RequireAuth><App /></RequireAuth>} />
+            <Route path="/database" element={<RequireAuth><DatabaseViewer /></RequireAuth>} />
+            <Route path="/projects/:projectId" element={<RequireAuth><ProjectView /></RequireAuth>} />
+            <Route path="/tasks/:taskId" element={<RequireAuth><TaskView /></RequireAuth>} />
+            <Route path="/vault" element={<RequireAuth><VaultView /></RequireAuth>} />
           </Routes>
         </BrowserRouter>
       </VaultProvider>

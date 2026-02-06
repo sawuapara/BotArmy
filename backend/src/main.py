@@ -21,6 +21,8 @@ from .api.organization import router as organization_router
 from .api.projects import router as projects_router
 from .api.tasks import router as tasks_router
 from .api.database import router as database_router
+from .api.status import router as status_router
+from .api.chat import router as chat_router
 
 
 # Store active sessions and their states
@@ -59,6 +61,8 @@ app.include_router(organization_router)
 app.include_router(projects_router)
 app.include_router(tasks_router)
 app.include_router(database_router)
+app.include_router(status_router)
+app.include_router(chat_router)
 
 
 # ---------- Pydantic Models ----------

@@ -6,6 +6,7 @@ import { RevenueStatus } from './components/RevenueStatus';
 import { RevenueWidget } from './components/RevenueWidget';
 import { ProjectsWidget } from './components/ProjectsWidget';
 import { TasksWidget } from './components/TasksWidget';
+import { ConnectionStatusWidget } from './components/ConnectionStatusWidget';
 import { AppHeader } from './components/AppHeader';
 import { useNamespace } from './context/NamespaceContext';
 import { API_BASE } from './lib/config';
@@ -159,9 +160,12 @@ function App() {
             )}
           </div>
 
-          {/* Right column: Thought log */}
-          <div className="col-span-3 h-[calc(100vh-180px)]">
-            <ThoughtLog thoughts={state?.thought_log ?? []} />
+          {/* Right column: Connection Status + Thought log */}
+          <div className="col-span-3 space-y-6">
+            <ConnectionStatusWidget />
+            <div className="h-[calc(100vh-320px)]">
+              <ThoughtLog thoughts={state?.thought_log ?? []} />
+            </div>
           </div>
         </div>
       </main>
