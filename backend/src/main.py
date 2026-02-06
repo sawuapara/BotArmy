@@ -23,6 +23,7 @@ from .api.tasks import router as tasks_router
 from .api.database import router as database_router
 from .api.status import router as status_router
 from .api.chat import router as chat_router
+from .api.workers import router as workers_router
 
 
 # Store active sessions and their states
@@ -30,11 +31,64 @@ sessions: dict[str, dict] = {}
 websocket_connections: dict[str, list[WebSocket]] = {}
 
 
+async def _check_stale_workers():
+    """Background task: detect and remove dead workers."""
+    import httpx
+    from .db import get_db_pool
+    from .logging import get_logger
+    logger = get_logger("workers")
+
+    while True:
+        await asyncio.sleep(30)
+        try:
+            pool = await get_db_pool()
+            async with pool.acquire() as conn:
+                # Find workers with no heartbeat in 90+ seconds
+                stale_rows = await conn.fetch("""
+                    SELECT id, hostname, worker_name, worker_address
+                    FROM orchestration.workers
+                    WHERE last_heartbeat_at < NOW() - INTERVAL '90 seconds'
+                """)
+
+                for row in stale_rows:
+                    worker_id = row["id"]
+                    address = row["worker_address"]
+                    name = row["worker_name"] or row["hostname"]
+
+                    # Try to ping the worker's health endpoint
+                    if address:
+                        try:
+                            async with httpx.AsyncClient() as client:
+                                resp = await client.get(f"{address}/health", timeout=5.0)
+                                if resp.status_code == 200:
+                                    logger.warning(f"Stale worker {name} ({worker_id}) responded to ping - updating heartbeat")
+                                    await conn.execute(
+                                        "UPDATE orchestration.workers SET last_heartbeat_at = NOW() WHERE id = $1",
+                                        worker_id,
+                                    )
+                                    continue
+                        except Exception:
+                            pass  # Ping failed - worker is dead
+
+                    # Worker is unreachable - delete it
+                    await conn.execute(
+                        "DELETE FROM orchestration.workers WHERE id = $1",
+                        worker_id,
+                    )
+                    logger.info(f"Removed dead worker: {name} ({worker_id})")
+
+        except Exception as e:
+            # Don't crash the background task on transient errors
+            pass
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     print("Starting LangGraph Orchestrator...")
+    stale_worker_task = asyncio.create_task(_check_stale_workers())
     yield
+    stale_worker_task.cancel()
     print("Shutting down...")
 
 
@@ -63,6 +117,7 @@ app.include_router(tasks_router)
 app.include_router(database_router)
 app.include_router(status_router)
 app.include_router(chat_router)
+app.include_router(workers_router, prefix="/api")
 
 
 # ---------- Pydantic Models ----------
