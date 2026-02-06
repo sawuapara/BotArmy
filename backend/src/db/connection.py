@@ -161,6 +161,7 @@ async def run_migrations(pool: asyncpg.Pool):
             ("011_create_orchestration_schema", MIGRATION_011_CREATE_ORCHESTRATION_SCHEMA),
             ("012_cleanup_public_schema", MIGRATION_012_CLEANUP_PUBLIC_SCHEMA),
             ("013_add_project_sort_order", MIGRATION_013_ADD_PROJECT_SORT_ORDER),
+            ("014_create_workers_table", MIGRATION_014_CREATE_WORKERS_TABLE),
         ]
 
         # Count pending migrations
@@ -888,4 +889,31 @@ ALTER TABLE projects.projects
 
 -- Index for efficient ordering
 CREATE INDEX IF NOT EXISTS idx_projects_projects_sort_order ON projects.projects(sort_order ASC);
+"""
+
+MIGRATION_014_CREATE_WORKERS_TABLE = """
+-- Workers: Distributed worker processes that connect to the backend server
+CREATE TABLE IF NOT EXISTS orchestration.workers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    hostname TEXT NOT NULL,
+    worker_name TEXT,
+    worker_address TEXT,           -- "http://hostname:8100" for backend to query
+    max_concurrent_jobs INTEGER NOT NULL DEFAULT 2,
+    current_jobs INTEGER NOT NULL DEFAULT 0,
+    capabilities TEXT[] DEFAULT '{}',
+    status TEXT NOT NULL DEFAULT 'online',  -- online, busy, offline, draining
+    last_heartbeat_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    registered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_orchestration_workers_status ON orchestration.workers(status);
+CREATE INDEX IF NOT EXISTS idx_orchestration_workers_heartbeat ON orchestration.workers(last_heartbeat_at);
+
+-- Reuse the existing orchestration.update_updated_at_column() trigger from migration 011
+DROP TRIGGER IF EXISTS update_orchestration_workers_updated_at ON orchestration.workers;
+CREATE TRIGGER update_orchestration_workers_updated_at
+    BEFORE UPDATE ON orchestration.workers
+    FOR EACH ROW
+    EXECUTE FUNCTION orchestration.update_updated_at_column();
 """
