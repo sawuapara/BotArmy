@@ -48,6 +48,7 @@ async def _check_stale_workers():
                     SELECT id, hostname, worker_name, worker_address
                     FROM orchestration.workers
                     WHERE last_heartbeat_at < NOW() - INTERVAL '90 seconds'
+                      AND status != 'offline'
                 """)
 
                 for row in stale_rows:
@@ -70,12 +71,12 @@ async def _check_stale_workers():
                         except Exception:
                             pass  # Ping failed - worker is dead
 
-                    # Worker is unreachable - delete it
+                    # Worker is unreachable - set it offline
                     await conn.execute(
-                        "DELETE FROM orchestration.workers WHERE id = $1",
+                        "UPDATE orchestration.workers SET status = 'offline' WHERE id = $1",
                         worker_id,
                     )
-                    logger.info(f"Removed dead worker: {name} ({worker_id})")
+                    logger.info(f"Set dead worker offline: {name} ({worker_id})")
 
         except Exception as e:
             # Don't crash the background task on transient errors

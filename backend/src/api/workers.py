@@ -108,19 +108,19 @@ async def worker_heartbeat(worker_id: UUID, request: HeartbeatRequest):
 
 @router.post("/{worker_id}/deregister")
 async def deregister_worker(worker_id: UUID):
-    """Graceful shutdown: delete worker from table."""
+    """Graceful shutdown: set worker status to offline."""
     logger.info(f"Worker deregistering: {worker_id}")
     pool = await get_db_pool()
     async with pool.acquire() as conn:
-        deleted = await conn.fetchval(
-            "DELETE FROM orchestration.workers WHERE id = $1 RETURNING id",
+        updated = await conn.fetchval(
+            "UPDATE orchestration.workers SET status = 'offline' WHERE id = $1 RETURNING id",
             worker_id,
         )
-        if not deleted:
+        if not updated:
             raise HTTPException(status_code=404, detail="Worker not found")
 
-        logger.info(f"Worker deregistered: {worker_id}")
-        return {"message": "Worker deregistered", "worker_id": str(worker_id)}
+        logger.info(f"Worker set offline: {worker_id}")
+        return {"message": "Worker set offline", "worker_id": str(worker_id)}
 
 
 @router.get("", response_model=list[WorkerResponse])
