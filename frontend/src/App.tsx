@@ -8,6 +8,7 @@ import { ProjectsWidget } from './components/ProjectsWidget';
 import { TasksWidget } from './components/TasksWidget';
 import { ConnectionStatusWidget } from './components/ConnectionStatusWidget';
 import { WorkersWidget } from './components/WorkersWidget';
+import { UniversesWidget } from './components/UniversesWidget';
 import { AppHeader } from './components/AppHeader';
 import { useNamespace } from './context/NamespaceContext';
 import { API_BASE } from './lib/config';
@@ -165,6 +166,7 @@ function App() {
           <div className="col-span-3 space-y-6">
             <ConnectionStatusWidget />
             <WorkersWidget />
+            <UniversesWidget />
             <div className="h-[calc(100vh-320px)]">
               <ThoughtLog thoughts={state?.thought_log ?? []} />
             </div>

@@ -96,6 +96,66 @@ export interface Session {
   thought_log: string[];
 }
 
+// Universe types
+export interface Universe {
+  id: string;
+  name: string;
+  dimension_id: string | null;
+  status: 'initializing' | 'active' | 'suspended' | 'terminated' | 'error';
+  worker_id: string;
+  agents: UniverseAgent[];
+  state_version: number;
+  created_at: string;
+}
+
+export interface UniverseAgent {
+  id: string;
+  name: string;
+  role: string;
+  model: string | null;
+  status: 'idle' | 'running' | 'paused' | 'completed' | 'error';
+  current_turn: number;
+}
+
+export interface LLMCallDetail {
+  id: string;
+  turnNumber: number;
+  iterationNumber: number;
+  systemPrompt: string;
+  messagesSent: Array<{ role: string; content: unknown }>;
+  toolsAvailable: unknown[] | null;
+  model: string;
+  maxTokens: number;
+  responseContent: unknown[];
+  stopReason: string;
+  inputTokens: number;
+  outputTokens: number;
+  toolCalls: Array<{ name: string; input: unknown; result: unknown }>;
+  startedAt: string;
+  durationMs: number;
+}
+
+export interface UniverseEvent {
+  type:
+    | 'turn_start'
+    | 'turn_end'
+    | 'tool_call'
+    | 'tool_result'
+    | 'llm_response'
+    | 'agent_done'
+    | 'agent_error'
+    | 'agent_started'
+    | 'iteration_detail'
+    | 'universe_created'
+    | 'universe_stopped';
+  universe_id: string;
+  agent_id?: string;
+  agent_name?: string;
+  worker_id?: string;
+  data: Record<string, unknown>;
+  timestamp: string;
+}
+
 // WebSocket message types
 export type WSMessage =
   | { type: 'initial_state'; state: OrchestratorState }

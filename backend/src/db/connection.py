@@ -162,6 +162,9 @@ async def run_migrations(pool: asyncpg.Pool):
             ("012_cleanup_public_schema", MIGRATION_012_CLEANUP_PUBLIC_SCHEMA),
             ("013_add_project_sort_order", MIGRATION_013_ADD_PROJECT_SORT_ORDER),
             ("014_create_workers_table", MIGRATION_014_CREATE_WORKERS_TABLE),
+            ("015_rename_jobs_to_agents", MIGRATION_015_RENAME_JOBS_TO_AGENTS),
+            ("016_add_worker_auth_token", MIGRATION_016_ADD_WORKER_AUTH_TOKEN),
+            ("017_create_conversations_and_turns", MIGRATION_017_CREATE_CONVERSATIONS_AND_TURNS),
         ]
 
         # Count pending migrations
@@ -914,6 +917,86 @@ CREATE INDEX IF NOT EXISTS idx_orchestration_workers_heartbeat ON orchestration.
 DROP TRIGGER IF EXISTS update_orchestration_workers_updated_at ON orchestration.workers;
 CREATE TRIGGER update_orchestration_workers_updated_at
     BEFORE UPDATE ON orchestration.workers
+    FOR EACH ROW
+    EXECUTE FUNCTION orchestration.update_updated_at_column();
+"""
+
+MIGRATION_015_RENAME_JOBS_TO_AGENTS = """
+-- Rename jobs columns to agents (capacity tracks agent loops, not universes)
+ALTER TABLE orchestration.workers
+    RENAME COLUMN max_concurrent_jobs TO max_concurrent_agents;
+ALTER TABLE orchestration.workers
+    RENAME COLUMN current_jobs TO current_agents;
+
+-- Update default capacity from 2 to 8
+ALTER TABLE orchestration.workers
+    ALTER COLUMN max_concurrent_agents SET DEFAULT 1024;
+"""
+
+MIGRATION_016_ADD_WORKER_AUTH_TOKEN = """
+-- Add auth_token_hash column for secure worker credential retrieval
+ALTER TABLE orchestration.workers
+    ADD COLUMN IF NOT EXISTS auth_token_hash TEXT;
+
+-- Partial index for token lookups (only non-NULL values)
+CREATE INDEX IF NOT EXISTS idx_orchestration_workers_auth_token_hash
+    ON orchestration.workers(auth_token_hash) WHERE auth_token_hash IS NOT NULL;
+"""
+
+MIGRATION_017_CREATE_CONVERSATIONS_AND_TURNS = """
+-- Conversations: one per agent run (maps to a universe + agent pair)
+CREATE TABLE IF NOT EXISTS orchestration.conversations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    universe_id TEXT NOT NULL,
+    agent_id TEXT NOT NULL,
+    agent_name TEXT,
+    agent_role TEXT,
+    model TEXT,
+    worker_id TEXT,
+    task_prompt TEXT,
+    status TEXT NOT NULL DEFAULT 'running',
+    error_message TEXT,
+    total_turns INT NOT NULL DEFAULT 0,
+    total_iterations INT NOT NULL DEFAULT 0,
+    total_input_tokens BIGINT NOT NULL DEFAULT 0,
+    total_output_tokens BIGINT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_conversations_universe ON orchestration.conversations(universe_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_created ON orchestration.conversations(created_at DESC);
+
+-- Turns: one per LLM API call within a conversation
+CREATE TABLE IF NOT EXISTS orchestration.turns (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID NOT NULL REFERENCES orchestration.conversations(id) ON DELETE CASCADE,
+    turn_number INT NOT NULL,
+    iteration_number INT NOT NULL,
+    system_prompt TEXT,
+    messages_sent JSONB,
+    tools_available JSONB,
+    model TEXT,
+    max_tokens INT,
+    response_content JSONB,
+    stop_reason TEXT,
+    input_tokens INT DEFAULT 0,
+    output_tokens INT DEFAULT 0,
+    tool_calls JSONB DEFAULT '[]',
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
+    duration_ms INT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_turns_conversation ON orchestration.turns(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_turns_order ON orchestration.turns(conversation_id, turn_number, iteration_number);
+
+-- Reuse orchestration.update_updated_at_column() from migration 011
+DROP TRIGGER IF EXISTS update_conversations_updated_at ON orchestration.conversations;
+CREATE TRIGGER update_conversations_updated_at
+    BEFORE UPDATE ON orchestration.conversations
     FOR EACH ROW
     EXECUTE FUNCTION orchestration.update_updated_at_column();
 """

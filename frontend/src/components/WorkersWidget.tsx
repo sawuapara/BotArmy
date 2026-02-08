@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Server, RefreshCw, Maximize2, X, Search } from 'lucide-react';
 import { API_BASE } from '../lib/config';
+import { useUniverseStream } from '../hooks/useUniverseStream';
+import { WorkerDetailModal } from './WorkerDetailModal';
 
 interface Worker {
   id: string;
   hostname: string;
   worker_name: string | null;
   worker_address: string | null;
-  max_concurrent_jobs: number;
-  current_jobs: number;
+  max_concurrent_agents: number;
+  current_agents: number;
   capabilities: string[];
   status: string;
   last_heartbeat_at: string;
@@ -52,9 +54,20 @@ function uptimeString(iso: string): string {
   return `${minutes}m`;
 }
 
-function WorkerCard({ worker, dimmed }: { worker: Worker; dimmed?: boolean }) {
+function WorkerCard({
+  worker,
+  dimmed,
+  onClick,
+}: {
+  worker: Worker;
+  dimmed?: boolean;
+  onClick?: () => void;
+}) {
   return (
-    <div className={`p-3 bg-gray-900 rounded-lg ${dimmed ? 'opacity-50' : ''}`}>
+    <div
+      className={`p-3 bg-gray-900 rounded-lg ${dimmed ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer hover:bg-gray-800 transition-colors' : ''}`}
+      onClick={onClick}
+    >
       <div className="flex items-center gap-2 mb-1">
         <span
           className={`w-2 h-2 rounded-full ${getStatusColor(worker.status)}`}
@@ -63,6 +76,7 @@ function WorkerCard({ worker, dimmed }: { worker: Worker; dimmed?: boolean }) {
           {worker.worker_name || worker.hostname}
         </span>
         <span className="text-xs text-gray-500">{worker.hostname}</span>
+        <span className="text-xs text-gray-500 capitalize">{worker.status}</span>
       </div>
 
       <div className="ml-4 text-xs text-gray-500 font-mono mb-1">
@@ -84,7 +98,7 @@ function WorkerCard({ worker, dimmed }: { worker: Worker; dimmed?: boolean }) {
 
       <div className="ml-4 flex items-center gap-3 text-xs text-gray-500">
         <span>
-          Jobs: {worker.current_jobs}/{worker.max_concurrent_jobs}
+          Agents: {worker.current_agents}/{worker.max_concurrent_agents}
         </span>
         <span>Heartbeat: {relativeTime(worker.last_heartbeat_at)}</span>
         <span>Up: {uptimeString(worker.registered_at)}</span>
@@ -100,7 +114,9 @@ export function WorkersWidget() {
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showOnlyActive, setShowOnlyActive] = useState(true);
+  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { universes, events } = useUniverseStream();
 
   const activeWorkers = useMemo(
     () => allWorkers.filter((w) => w.status !== 'offline'),
@@ -201,7 +217,11 @@ export function WorkersWidget() {
         ) : (
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {activeWorkers.map((worker) => (
-              <WorkerCard key={worker.id} worker={worker} />
+              <WorkerCard
+                key={worker.id}
+                worker={worker}
+                onClick={() => setSelectedWorker(worker)}
+              />
             ))}
           </div>
         )}
@@ -261,12 +281,22 @@ export function WorkersWidget() {
                     key={worker.id}
                     worker={worker}
                     dimmed={worker.status === 'offline'}
+                    onClick={() => setSelectedWorker(worker)}
                   />
                 ))
               )}
             </div>
           </div>
         </div>
+      )}
+
+      {selectedWorker && (
+        <WorkerDetailModal
+          worker={selectedWorker}
+          universes={universes}
+          events={events}
+          onClose={() => setSelectedWorker(null)}
+        />
       )}
     </>
   );

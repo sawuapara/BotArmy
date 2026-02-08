@@ -13,6 +13,7 @@ async def heartbeat_loop(
     client: BackendClient,
     config: WorkerConfig,
     shutdown_event: asyncio.Event,
+    manager=None,
 ):
     """Send periodic heartbeats to the backend server.
 
@@ -22,7 +23,9 @@ async def heartbeat_loop(
     consecutive_failures = 0
 
     while not shutdown_event.is_set():
-        success = await client.heartbeat(current_jobs=0, status="online")
+        current_agents = manager.running_agent_count if manager else 0
+        status = "busy" if (manager and current_agents >= config.capacity) else "online"
+        success = await client.heartbeat(current_agents=current_agents, status=status)
 
         if success:
             if consecutive_failures > 0:
